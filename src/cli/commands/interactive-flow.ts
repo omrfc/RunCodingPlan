@@ -9,7 +9,7 @@ import {
   updateCustomProvider,
 } from '../../core/custom.js';
 import { banner, sectionBox, footerPlug, c, success, info } from '../ui.js';
-import { select, input, confirm } from '../interactive.js';
+import { select, input, confirm, type SelectOption } from '../interactive.js';
 import { launchCommand } from './launch.js';
 import { addCustomCommand } from './custom.js';
 import { updateCommand } from './update.js';
@@ -134,7 +134,7 @@ async function interactiveLaunch(
     success(`API key saved for ${provider.name} (encrypted)`);
   }
 
-  const modelOptions = provider.models.map((m) => {
+  const modelOptions: SelectOption[] = provider.models.map((m) => {
     const isUser = provider.userModels.includes(m) && !provider.isCustom;
     const isDefault = m === provider.defaultModel;
     const marker = isUser ? ' (*)' : '';
@@ -142,14 +142,14 @@ async function interactiveLaunch(
     return { label: `${m}${marker}${defMarker}`, value: m };
   });
   if (provider.userModels.length > 0 && !provider.isCustom) {
-    modelOptions.push({ label: '─────────────', value: '', separator: true } as never);
+    modelOptions.push({ label: '─────────────', value: '', separator: true });
     modelOptions.push({
       label: c.dim('(*) = user-added model'),
       value: '',
       disabled: true,
-    } as never);
+    });
   }
-  const model = await select('Select model:', modelOptions as never);
+  const model = await select('Select model:', modelOptions);
 
   const skipDangerous = await confirm(
     'Skip dangerous permissions?',

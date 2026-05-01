@@ -1,8 +1,9 @@
-import { writeFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
+import { writeFileSync, existsSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SessionSettings } from '../types.js';
 import { CLAUDE_DIR, SESSION_PREFIX, SESSION_MAX_AGE_MS } from '../constants.js';
 import { loadTemplate, applyTemplate } from './template.js';
+import { ensureDir } from './fs-utils.js';
 
 export interface BuildOptions {
   statusLine: boolean;
@@ -27,7 +28,7 @@ export function buildSessionSettings(
 }
 
 export function writeSessionFile(providerId: string, settings: SessionSettings): string {
-  if (!existsSync(CLAUDE_DIR)) mkdirSync(CLAUDE_DIR, { recursive: true });
+  ensureDir(CLAUDE_DIR);
   const filename = `${SESSION_PREFIX}${providerId}-${Date.now()}.json`;
   const path = join(CLAUDE_DIR, filename);
   writeFileSync(path, JSON.stringify(settings, null, 2), 'utf8');
