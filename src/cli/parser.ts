@@ -12,35 +12,45 @@ const FLAG_ALIASES: Record<string, string> = {
   '-h': '--help',
 };
 
-const STRING_FLAGS = new Set([
-  '--provider',
-  '--model',
-  '--apikey',
-  '--remove-custom',
-  '--add-model',
-  '--remove-model',
-  '--name',
-  '--url',
-]);
+const BOOLEAN_FLAG_TO_KEY = {
+  '--skip-dangerous': 'skipDangerous',
+  '--statusline': 'statusLine',
+  '--update': 'update',
+  '--list': 'list',
+  '--list-custom': 'listCustom',
+  '--status': 'status',
+  '--remove-key': 'removeKey',
+  '--add-custom': 'addCustom',
+  '--set-default': 'setDefault',
+  '--clean': 'clean',
+  '--no-launch': 'noLaunch',
+  '--dry-run': 'dryRun',
+  '--show-template': 'showTemplate',
+  '--reset-template': 'resetTemplate',
+  '--version': 'version',
+  '--help': 'help',
+} as const satisfies Record<string, keyof ParsedArgs>;
 
-const BOOLEAN_FLAGS = new Set([
-  '--skip-dangerous',
-  '--statusline',
-  '--update',
-  '--list',
-  '--list-custom',
-  '--status',
-  '--remove-key',
-  '--add-custom',
-  '--set-default',
-  '--clean',
-  '--no-launch',
-  '--dry-run',
-  '--show-template',
-  '--reset-template',
-  '--version',
-  '--help',
-]);
+const STRING_FLAG_TO_KEY = {
+  '--provider': 'provider',
+  '--model': 'model',
+  '--apikey': 'apikey',
+  '--remove-custom': 'removeCustom',
+  '--add-model': 'addModel',
+  '--remove-model': 'removeModel',
+  '--name': 'name',
+  '--url': 'url',
+} as const satisfies Record<string, keyof ParsedArgs>;
+
+type BooleanFlag = keyof typeof BOOLEAN_FLAG_TO_KEY;
+type StringFlag = keyof typeof STRING_FLAG_TO_KEY;
+
+function isBooleanFlag(flag: string): flag is BooleanFlag {
+  return flag in BOOLEAN_FLAG_TO_KEY;
+}
+function isStringFlag(flag: string): flag is StringFlag {
+  return flag in STRING_FLAG_TO_KEY;
+}
 
 export class ParseError extends Error {
   constructor(message: string) {
@@ -71,25 +81,23 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     const rawArg = argv[i];
     /* c8 ignore next -- defensive guard; for-loop bounds prevent undefined */
     if (rawArg === undefined) continue;
-    let arg = rawArg;
-    const alias = FLAG_ALIASES[arg];
-    if (alias) arg = alias;
+    const arg = FLAG_ALIASES[rawArg] ?? rawArg;
 
     if (!arg.startsWith('--')) {
       throw new ParseError(`Unknown argument: ${rawArg}`);
     }
 
-    if (BOOLEAN_FLAGS.has(arg)) {
-      setBool(result, arg, true);
+    if (isBooleanFlag(arg)) {
+      (result as unknown as Record<string, unknown>)[BOOLEAN_FLAG_TO_KEY[arg]] = true;
       continue;
     }
 
-    if (STRING_FLAGS.has(arg)) {
+    if (isStringFlag(arg)) {
       const next = argv[i + 1];
       if (next === undefined || next.startsWith('-')) {
         throw new ParseError(`Flag ${arg} requires a value`);
       }
-      setString(result, arg, next);
+      (result as unknown as Record<string, unknown>)[STRING_FLAG_TO_KEY[arg]] = next;
       i++;
       continue;
     }
@@ -98,86 +106,4 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   }
 
   return result;
-}
-
-function setBool(result: ParsedArgs, flag: string, value: boolean): void {
-  switch (flag) {
-    case '--skip-dangerous':
-      result.skipDangerous = value;
-      break;
-    case '--statusline':
-      result.statusLine = value;
-      break;
-    case '--update':
-      result.update = value;
-      break;
-    case '--list':
-      result.list = value;
-      break;
-    case '--list-custom':
-      result.listCustom = value;
-      break;
-    case '--status':
-      result.status = value;
-      break;
-    case '--remove-key':
-      result.removeKey = value;
-      break;
-    case '--add-custom':
-      result.addCustom = value;
-      break;
-    case '--set-default':
-      result.setDefault = value;
-      break;
-    case '--clean':
-      result.clean = value;
-      break;
-    case '--no-launch':
-      result.noLaunch = value;
-      break;
-    case '--dry-run':
-      result.dryRun = value;
-      break;
-    case '--show-template':
-      result.showTemplate = value;
-      break;
-    case '--reset-template':
-      result.resetTemplate = value;
-      break;
-    case '--version':
-      result.version = value;
-      break;
-    case '--help':
-      result.help = value;
-      break;
-  }
-}
-
-function setString(result: ParsedArgs, flag: string, value: string): void {
-  switch (flag) {
-    case '--provider':
-      result.provider = value;
-      break;
-    case '--model':
-      result.model = value;
-      break;
-    case '--apikey':
-      result.apikey = value;
-      break;
-    case '--remove-custom':
-      result.removeCustom = value;
-      break;
-    case '--add-model':
-      result.addModel = value;
-      break;
-    case '--remove-model':
-      result.removeModel = value;
-      break;
-    case '--name':
-      result.name = value;
-      break;
-    case '--url':
-      result.url = value;
-      break;
-  }
 }

@@ -1,18 +1,19 @@
 import type { WhichCCConfig } from '../../types.js';
-import { resolveAllProviders, getBuiltinResolved, getCustomResolved } from '../../core/providers.js';
+import { resolveAllProviders } from '../../core/providers.js';
 import { hasKey } from '../../core/keys.js';
 import { c, footerPlug } from '../ui.js';
 
 export function listCommand(config: WhichCCConfig, onlyCustom = false): void {
-  const all = onlyCustom ? getCustomResolved(config) : resolveAllProviders(config);
-  if (all.length === 0) {
+  const all = resolveAllProviders(config);
+  const visible = onlyCustom ? all.filter((p) => p.isCustom) : all;
+  if (visible.length === 0) {
     console.log('\n  ' + c.dim('No providers available.'));
     return;
   }
 
   console.log('');
-  const builtin = onlyCustom ? [] : getBuiltinResolved(config);
-  const custom = onlyCustom ? all : getCustomResolved(config);
+  const builtin = onlyCustom ? [] : all.filter((p) => !p.isCustom);
+  const custom = all.filter((p) => p.isCustom);
 
   if (builtin.length > 0) {
     console.log('  ' + c.bold('Built-in Providers'));

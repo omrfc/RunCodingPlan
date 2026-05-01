@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { TEMPLATE_PATH, DEFAULT_TIMEOUT_MS } from '../constants.js';
+import { ensureParentDir } from './fs-utils.js';
 
 const DEFAULT_TEMPLATE_OBJECT = {
   env: {
@@ -83,7 +83,7 @@ function substituteString(s: string, vars: TemplateVars): string {
 }
 
 export function writeTemplate(content: Record<string, unknown> = getDefaultTemplate()): string {
-  mkdirSync(dirname(TEMPLATE_PATH), { recursive: true });
+  ensureParentDir(TEMPLATE_PATH);
   writeFileSync(TEMPLATE_PATH, JSON.stringify(content, null, 2), 'utf8');
   return TEMPLATE_PATH;
 }

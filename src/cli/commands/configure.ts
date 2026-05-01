@@ -1,4 +1,4 @@
-import type { ParsedArgs, WhichCCConfig } from '../../types.js';
+import type { ParsedArgs, ResolvedProvider, WhichCCConfig } from '../../types.js';
 import { resolveProvider } from '../../core/providers.js';
 import { addUserModel, removeUserModel, saveConfig } from '../../core/config.js';
 import {
@@ -9,9 +9,9 @@ import {
 import { removeKey, setKey } from '../../core/keys.js';
 import { success, error, info } from '../ui.js';
 
-export function addModelCommand(args: ParsedArgs, config: WhichCCConfig): void {
-  if (!args.provider || !args.addModel) {
-    error('Usage: --provider <id> --add-model <model> [--set-default]');
+function requireProvider(args: ParsedArgs, config: WhichCCConfig, usage: string): ResolvedProvider {
+  if (!args.provider) {
+    error(usage);
     process.exit(1);
   }
   const provider = resolveProvider(args.provider, config);
@@ -19,6 +19,19 @@ export function addModelCommand(args: ParsedArgs, config: WhichCCConfig): void {
     error(`Unknown provider: ${args.provider}`);
     process.exit(1);
   }
+  return provider;
+}
+
+export function addModelCommand(args: ParsedArgs, config: WhichCCConfig): void {
+  if (!args.addModel) {
+    error('Usage: --provider <id> --add-model <model> [--set-default]');
+    process.exit(1);
+  }
+  const provider = requireProvider(
+    args,
+    config,
+    'Usage: --provider <id> --add-model <model> [--set-default]',
+  );
 
   if (provider.isCustom) {
     addModelToCustomProvider(config, provider.id, args.addModel, args.setDefault);
@@ -37,15 +50,15 @@ export function addModelCommand(args: ParsedArgs, config: WhichCCConfig): void {
 }
 
 export function removeModelCommand(args: ParsedArgs, config: WhichCCConfig): void {
-  if (!args.provider || !args.removeModel) {
+  if (!args.removeModel) {
     error('Usage: --provider <id> --remove-model <model>');
     process.exit(1);
   }
-  const provider = resolveProvider(args.provider, config);
-  if (!provider) {
-    error(`Unknown provider: ${args.provider}`);
-    process.exit(1);
-  }
+  const provider = requireProvider(
+    args,
+    config,
+    'Usage: --provider <id> --remove-model <model>',
+  );
 
   if (provider.isCustom) {
     const { removed } = removeModelFromCustomProvider(config, provider.id, args.removeModel);
@@ -70,29 +83,17 @@ export function removeModelCommand(args: ParsedArgs, config: WhichCCConfig): voi
 }
 
 export function setApiKeyCommand(args: ParsedArgs, config: WhichCCConfig): void {
-  if (!args.provider || !args.apikey) {
+  if (!args.apikey) {
     error('Usage: --provider <id> --apikey <key>');
     process.exit(1);
   }
-  const provider = resolveProvider(args.provider, config);
-  if (!provider) {
-    error(`Unknown provider: ${args.provider}`);
-    process.exit(1);
-  }
+  const provider = requireProvider(args, config, 'Usage: --provider <id> --apikey <key>');
   setKey(provider.id, args.apikey);
   success(`API key saved for ${provider.name} (encrypted)`);
 }
 
 export function removeApiKeyCommand(args: ParsedArgs, config: WhichCCConfig): void {
-  if (!args.provider) {
-    error('Usage: --provider <id> --remove-key');
-    process.exit(1);
-  }
-  const provider = resolveProvider(args.provider, config);
-  if (!provider) {
-    error(`Unknown provider: ${args.provider}`);
-    process.exit(1);
-  }
+  const provider = requireProvider(args, config, 'Usage: --provider <id> --remove-key');
   const removed = removeKey(provider.id);
   if (removed) {
     success(`API key removed for ${provider.name}`);
@@ -102,15 +103,15 @@ export function removeApiKeyCommand(args: ParsedArgs, config: WhichCCConfig): vo
 }
 
 export function setDefaultModelCommand(args: ParsedArgs, config: WhichCCConfig): void {
-  if (!args.provider || !args.model) {
+  if (!args.model) {
     error('Usage: --provider <id> --model <model> --set-default');
     process.exit(1);
   }
-  const provider = resolveProvider(args.provider, config);
-  if (!provider) {
-    error(`Unknown provider: ${args.provider}`);
-    process.exit(1);
-  }
+  const provider = requireProvider(
+    args,
+    config,
+    'Usage: --provider <id> --model <model> --set-default',
+  );
   if (!provider.models.includes(args.model)) {
     error(`Model "${args.model}" not available for ${provider.name}`);
     process.exit(1);

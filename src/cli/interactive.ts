@@ -9,6 +9,55 @@ export interface SelectOption {
   hint?: string;
 }
 
+const KEY_CTRL_C = '';
+const KEY_ENTER_RETURN = ['\r', '\n'] as const;
+const KEY_BACKSPACE = ['', '\b'] as const;
+const KEY_ARROW_UP = '[A';
+const KEY_ARROW_DOWN = '[B';
+
+interface RawSession {
+  cleanup: () => void;
+}
+
+function startRawSession(onData: (chunk: string) => void): RawSession {
+  const stdin = process.stdin;
+  let rawModeSet = false;
+
+  try {
+    if (stdin.isTTY) {
+      stdin.setRawMode(true);
+      rawModeSet = true;
+    }
+  } catch {
+    // non-TTY environment
+  }
+  stdin.resume();
+  stdin.setEncoding('utf8');
+  stdin.on('data', onData);
+
+  return {
+    cleanup: () => {
+      stdin.removeListener('data', onData);
+      if (rawModeSet && stdin.isTTY) {
+        /* c8 ignore next 5 -- setRawMode(false) rarely throws in practice */
+        try {
+          stdin.setRawMode(false);
+        } catch {
+          // ignore
+        }
+      }
+      stdin.pause();
+    },
+  };
+}
+
+function cancelAndExit(cleanup: () => void): never {
+  cleanup();
+  restoreTerminal();
+  console.log('\n  ' + c.gray('Cancelled.'));
+  process.exit(130);
+}
+
 export async function select(question: string, options: SelectOption[]): Promise<string> {
   const selectable: number[] = [];
   for (let i = 0; i < options.length; i++) {
@@ -19,24 +68,11 @@ export async function select(question: string, options: SelectOption[]): Promise
 
   let cursor = 0;
 
-  return new Promise((resolve, reject) => {
-    const stdin = process.stdin;
+  return new Promise<string>((resolve, reject) => {
     const stdout = process.stdout;
-    let rawModeSet = false;
-
-    try {
-      if (stdin.isTTY) {
-        stdin.setRawMode(true);
-        rawModeSet = true;
-      }
-    } catch {
-      // non-TTY environment
-    }
-    stdin.resume();
-    stdin.setEncoding('utf8');
     hideCursor();
 
-    const render = (first: boolean) => {
+    const render = (first: boolean): void => {
       if (!first) {
         const totalLines = options.length + 1;
         stdout.write(ANSI.cursorUp(totalLines));
@@ -58,29 +94,14 @@ export async function select(question: string, options: SelectOption[]): Promise
       }
     };
 
-    const cleanup = () => {
-      stdin.removeListener('data', onData);
-      if (rawModeSet && stdin.isTTY) {
-        /* c8 ignore next 5 -- setRawMode(false) rarely throws in practice */
-        try {
-          stdin.setRawMode(false);
-        } catch {
-          // ignore
-        }
+    const session = startRawSession((key) => {
+      if (key === KEY_CTRL_C) {
+        showCursor();
+        cancelAndExit(session.cleanup);
       }
-      stdin.pause();
-      showCursor();
-    };
-
-    const onData = (key: string) => {
-      if (key === '\u0003') {
-        cleanup();
-        restoreTerminal();
-        console.log('\n  ' + c.gray('Cancelled.'));
-        process.exit(130);
-      }
-      if (key === '\r' || key === '\n') {
-        cleanup();
+      if (KEY_ENTER_RETURN.includes(key as (typeof KEY_ENTER_RETURN)[number])) {
+        session.cleanup();
+        showCursor();
         const chosenIndex = selectable[cursor];
         /* c8 ignore next 4 -- defensive guard; selectable is bounds-clamped */
         if (chosenIndex === undefined) {
@@ -97,20 +118,19 @@ export async function select(question: string, options: SelectOption[]): Promise
         resolve(chosen.value);
         return;
       }
-      if (key === '\u001b[A' || key === 'k') {
+      if (key === KEY_ARROW_UP || key === 'k') {
         cursor = (cursor - 1 + selectable.length) % selectable.length;
         render(false);
         return;
       }
-      if (key === '\u001b[B' || key === 'j') {
+      if (key === KEY_ARROW_DOWN || key === 'j') {
         cursor = (cursor + 1) % selectable.length;
         render(false);
         return;
       }
-    };
+    });
 
     render(true);
-    stdin.on('data', onData);
   });
 }
 
@@ -118,22 +138,9 @@ export async function input(
   question: string,
   options: { masked?: boolean; default?: string } = {},
 ): Promise<string> {
-  return new Promise((resolve) => {
-    const stdin = process.stdin;
+  return new Promise<string>((resolve) => {
     const stdout = process.stdout;
-    let rawModeSet = false;
     let buffer = '';
-
-    try {
-      if (stdin.isTTY) {
-        stdin.setRawMode(true);
-        rawModeSet = true;
-      }
-    } catch {
-      // ignore
-    }
-    stdin.resume();
-    stdin.setEncoding('utf8');
 
     const prompt =
       `  ${c.cyan('?')} ${c.bold(question)}` +
@@ -141,45 +148,24 @@ export async function input(
       ' ';
     stdout.write(prompt);
 
-    const render = () => {
+    const render = (): void => {
       stdout.write('\r' + ANSI.clearLine);
       stdout.write(prompt);
-      if (options.masked) {
-        stdout.write('•'.repeat(buffer.length));
-      } else {
-        stdout.write(buffer);
-      }
+      stdout.write(options.masked ? '•'.repeat(buffer.length) : buffer);
     };
 
-    const cleanup = () => {
-      stdin.removeListener('data', onData);
-      if (rawModeSet && stdin.isTTY) {
-        /* c8 ignore next 5 -- setRawMode(false) rarely throws in practice */
-        try {
-          stdin.setRawMode(false);
-        } catch {
-          // ignore
-        }
-      }
-      stdin.pause();
-    };
-
-    const onData = (chunk: string) => {
+    const session = startRawSession((chunk) => {
       for (const key of chunk) {
-        if (key === '\u0003') {
-          cleanup();
-          restoreTerminal();
-          console.log('\n  ' + c.gray('Cancelled.'));
-          process.exit(130);
+        if (key === KEY_CTRL_C) {
+          cancelAndExit(session.cleanup);
         }
-        if (key === '\r' || key === '\n') {
-          cleanup();
+        if (KEY_ENTER_RETURN.includes(key as (typeof KEY_ENTER_RETURN)[number])) {
+          session.cleanup();
           stdout.write('\n');
-          const value = buffer || options.default || '';
-          resolve(value);
+          resolve(buffer || options.default || '');
           return;
         }
-        if (key === '\u007f' || key === '\b') {
+        if (KEY_BACKSPACE.includes(key as (typeof KEY_BACKSPACE)[number])) {
           if (buffer.length > 0) {
             buffer = buffer.slice(0, -1);
             render();
@@ -191,9 +177,9 @@ export async function input(
         buffer += key;
         render();
       }
-    };
+    });
 
-    stdin.on('data', onData);
+    void session;
   });
 }
 

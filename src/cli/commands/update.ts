@@ -1,9 +1,9 @@
-import { writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { writeFileSync } from 'node:fs';
 import type { ModelRegistry, WhichCCConfig } from '../../types.js';
 import { REGISTRY_URL, REGISTRY_CACHE_PATH } from '../../constants.js';
 import { loadCachedRegistry, isValidRegistry } from '../../core/registry.js';
 import { saveConfig } from '../../core/config.js';
+import { ensureParentDir } from '../../core/fs-utils.js';
 import { success, info, error, warn } from '../ui.js';
 import { c } from '../ui.js';
 
@@ -32,8 +32,7 @@ export async function updateCommand(config: WhichCCConfig): Promise<void> {
 
   const cached = loadCachedRegistry();
 
-  const dir = dirname(REGISTRY_CACHE_PATH);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  ensureParentDir(REGISTRY_CACHE_PATH);
   writeFileSync(REGISTRY_CACHE_PATH, JSON.stringify(fetched, null, 2), 'utf8');
 
   if (cached) {

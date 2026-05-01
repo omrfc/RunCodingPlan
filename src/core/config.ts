@@ -1,5 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import type { WhichCCConfig, ProviderConfig } from '../types.js';
 import {
   CONFIG_PATH,
@@ -7,6 +6,7 @@ import {
   DEFAULT_STATUS_LINE_COMMAND,
 } from '../constants.js';
 import { BUILTIN_PROVIDERS } from './registry.js';
+import { ensureDir, ensureParentDir } from './fs-utils.js';
 
 export function getDefaultConfig(): WhichCCConfig {
   const providers: Record<string, ProviderConfig> = {};
@@ -27,9 +27,7 @@ export function getDefaultConfig(): WhichCCConfig {
 }
 
 export function ensureDirs(): void {
-  if (!existsSync(WHICHCC_DIR)) {
-    mkdirSync(WHICHCC_DIR, { recursive: true });
-  }
+  ensureDir(WHICHCC_DIR);
 }
 
 export function loadConfig(): WhichCCConfig {
@@ -52,8 +50,7 @@ export function loadConfig(): WhichCCConfig {
 
 export function saveConfig(config: WhichCCConfig): void {
   ensureDirs();
-  const dir = dirname(CONFIG_PATH);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  ensureParentDir(CONFIG_PATH);
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
 }
 
