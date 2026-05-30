@@ -41,7 +41,7 @@ describe('addCustomCommand (flag path)', () => {
     const cap = captureIO();
     try {
       await addCustomCommand(baseArgs({
-        name: 'DeepSeek', url: 'https://api.deepseek.com/anthropic', apikey: 'sk', model: 'ds',
+        name: 'MyDeepSeek', url: 'https://api.deepseek.com/anthropic', apikey: 'sk', model: 'ds',
       }), cfg);
     } finally {
       cap.restore();

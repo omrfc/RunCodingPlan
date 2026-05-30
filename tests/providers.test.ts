@@ -33,14 +33,14 @@ describe('resolveProvider', () => {
 
   it('resolves custom provider', () => {
     const cfg = getDefaultConfig();
-    addCustomProvider(cfg, 'deepseek', {
-      name: 'DeepSeek',
+    addCustomProvider(cfg, 'custom-deepseek', {
+      name: 'Custom DeepSeek',
       baseUrl: 'https://api.deepseek.com/anthropic',
       models: ['r3'],
       defaultModel: 'r3',
       addedAt: 'now',
     });
-    const p = resolveProvider('deepseek', cfg);
+    const p = resolveProvider('custom-deepseek', cfg);
     expect(p?.isCustom).toBe(true);
     expect(p?.models).toEqual(['r3']);
   });
@@ -49,8 +49,8 @@ describe('resolveProvider', () => {
 describe('resolveAllProviders', () => {
   it('returns built-ins plus custom', () => {
     const cfg = getDefaultConfig();
-    addCustomProvider(cfg, 'deepseek', {
-      name: 'DeepSeek',
+    addCustomProvider(cfg, 'my-deepseek', {
+      name: 'My DeepSeek',
       baseUrl: 'https://api.deepseek.com/anthropic',
       models: ['r3'],
       defaultModel: 'r3',

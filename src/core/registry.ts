@@ -111,6 +111,26 @@ export const BUILTIN_PROVIDERS: Record<string, BuiltinProvider> = {
       },
     ],
   },
+  deepseek: {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com/anthropic',
+    signupUrl: 'https://platform.deepseek.com',
+    defaultModel: 'deepseek-v4-pro',
+    models: [
+      {
+        id: 'deepseek-v4-pro',
+        name: 'DeepSeek V4 Pro',
+        capabilities: ['text', 'deep-thinking'],
+        isDefault: true,
+      },
+      {
+        id: 'deepseek-v4-flash',
+        name: 'DeepSeek V4 Flash',
+        capabilities: ['text'],
+      },
+    ],
+  },
 };
 
 function mergeWithLocalAffiliate(id: string, cached: BuiltinProvider): BuiltinProvider {

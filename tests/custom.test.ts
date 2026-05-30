@@ -29,20 +29,19 @@ describe('isReservedId', () => {
     expect(isReservedId('kimi')).toBe(true);
     expect(isReservedId('minimax')).toBe(true);
     expect(isReservedId('alibaba')).toBe(true);
-    expect(isReservedId('deepseek')).toBe(false);
+    expect(isReservedId('deepseek')).toBe(true);
   });
 });
 
 describe('validateCustomProviderInput', () => {
-  it('accepts valid input', () => {
+  it('rejects reserved id (deepseek)', () => {
     const r = validateCustomProviderInput({
       name: 'DeepSeek',
       baseUrl: 'https://api.deepseek.com/anthropic',
       models: ['m1'],
       defaultModel: 'm1',
     });
-    expect(r.ok).toBe(true);
-    if (r.ok) expect(r.id).toBe('deepseek');
+    expect(r.ok).toBe(false);
   });
 
   it('rejects reserved id', () => {
@@ -79,17 +78,17 @@ describe('validateCustomProviderInput', () => {
 describe('add/remove/mutate custom provider', () => {
   it('adds then removes', () => {
     const cfg = getDefaultConfig();
-    addCustomProvider(cfg, 'deepseek', {
-      name: 'DeepSeek',
+    addCustomProvider(cfg, 'my-deepseek', {
+      name: 'My DeepSeek',
       baseUrl: 'https://api.deepseek.com/anthropic',
       models: ['m1', 'm2'],
       defaultModel: 'm1',
       addedAt: 'now',
     });
-    expect(cfg.customProviders['deepseek']).toBeDefined();
-    const { removed } = removeCustomProvider(cfg, 'deepseek');
+    expect(cfg.customProviders['my-deepseek']).toBeDefined();
+    const { removed } = removeCustomProvider(cfg, 'my-deepseek');
     expect(removed).toBe(true);
-    expect(cfg.customProviders['deepseek']).toBeUndefined();
+    expect(cfg.customProviders['my-deepseek']).toBeUndefined();
   });
 
   it('adds model to custom with set-as-default', () => {

@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { BUILTIN_PROVIDERS, isValidRegistry } from '../src/core/registry.js';
 
 describe('BUILTIN_PROVIDERS', () => {
-  it('contains the 4 built-in providers', () => {
+  it('contains the 5 built-in providers', () => {
     expect(Object.keys(BUILTIN_PROVIDERS).sort()).toEqual(
-      ['alibaba', 'kimi', 'minimax', 'zai'].sort(),
+      ['alibaba', 'deepseek', 'kimi', 'minimax', 'zai'].sort(),
     );
   });
 
