@@ -17,7 +17,7 @@ export const SESSION_PREFIX = 'runcodingplan-';
 export const REGISTRY_URL =
   'https://raw.githubusercontent.com/ersinkoc/runcodingplan/main/registry/models.json';
 
-export const RESERVED_PROVIDER_IDS = ['zai', 'kimi', 'minimax', 'alibaba'] as const;
+export const RESERVED_PROVIDER_IDS = ['zai', 'kimi', 'minimax', 'alibaba', 'deepseek'] as const;
 export type ReservedProviderId = (typeof RESERVED_PROVIDER_IDS)[number];
 
 export const DEFAULT_STATUS_LINE_COMMAND = 'npx -y ccstatusline@latest';
