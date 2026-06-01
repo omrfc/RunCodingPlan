@@ -121,10 +121,10 @@ export const BUILTIN_PROVIDERS: Record<string, BuiltinProvider> = {
     name: 'DeepSeek',
     baseUrl: 'https://api.deepseek.com/anthropic',
     signupUrl: 'https://platform.deepseek.com',
-    defaultModel: 'deepseek-v4-pro',
+    defaultModel: 'deepseek-v4-pro[1m]',
     models: [
       {
-        id: 'deepseek-v4-pro',
+        id: 'deepseek-v4-pro[1m]',
         name: 'DeepSeek V4 Pro',
         capabilities: ['text', 'deep-thinking'],
         isDefault: true,
