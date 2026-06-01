@@ -42,13 +42,18 @@ export const BUILTIN_PROVIDERS: Record<string, BuiltinProvider> = {
     baseUrl: 'https://api.minimax.io/anthropic',
     signupUrl: 'https://platform.minimax.io/subscribe/token-plan',
     affiliateUrl: 'https://bit.ly/4tgh1rh',
-    defaultModel: 'MiniMax-M2.7',
+    defaultModel: 'MiniMax-M3',
     models: [
+      {
+        id: 'MiniMax-M3',
+        name: 'MiniMax M3',
+        capabilities: ['text', 'deep-thinking'],
+        isDefault: true,
+      },
       {
         id: 'MiniMax-M2.7',
         name: 'MiniMax M2.7',
         capabilities: ['text', 'deep-thinking'],
-        isDefault: true,
       },
       {
         id: 'MiniMax-M2.5',
