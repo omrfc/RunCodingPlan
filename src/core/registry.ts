@@ -130,7 +130,7 @@ export const BUILTIN_PROVIDERS: Record<string, BuiltinProvider> = {
         isDefault: true,
       },
       {
-        id: 'deepseek-v4-flash',
+        id: 'deepseek-v4-flash[1m]',
         name: 'DeepSeek V4 Flash',
         capabilities: ['text'],
       },
